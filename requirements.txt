@@ -1,0 +1,6 @@
+fastapi
+flake8
+gunicorn
+numpy
+pyyaml
+uvicorn

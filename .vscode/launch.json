@@ -1,0 +1,36 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Start server",
+            "type": "python",
+            "request": "launch",
+            "program": "src/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--debug",
+                "serve",
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Send email",
+            "type": "python",
+            "request": "launch",
+            "program": "src/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "send",
+                "--email ${input:targetEmail}",
+            ],
+            "justMyCode": false
+        },
+    ],
+    "inputs": [
+        {
+            "id": "targetEmail",
+            "type": "promptString",
+            "description": "Email address to send"
+        }
+    ]
+}
