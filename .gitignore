@@ -37,4 +37,4 @@ venv.bak/
 
 # Configs
 config.yml
-*.db
+*.sqlite

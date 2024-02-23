@@ -1,6 +1,6 @@
+import uuid
 import logging
 import sqlite3
-from uuid import uuid4
 from typing import Any
 from functools import cache
 from datetime import datetime, timezone
@@ -8,12 +8,14 @@ from datetime import datetime, timezone
 from .constants import *
 
 logging.basicConfig(level=logging.DEBUG)
+sqlite3.register_adapter(uuid.UUID, lambda u: u.bytes_le)
+sqlite3.register_converter("GUID", lambda b: uuid.UUID(bytes_le=b))
 
 
 @cache
 def create_image(width: int = 5, height: int = 5, channels: int = 4) -> bytes:
     import numpy as np
-    return np.zeros((width, height, channels), dtype=np.uint8).tobytes()
+    return np.full((width, height, channels), 255, dtype=np.uint8).tobytes()
 
 
 @cache
@@ -36,10 +38,12 @@ def create_db() -> None:
 
 
 def create_record(email: str) -> str:
-    args = str(uuid4()), email, None
+    args = uuid.uuid4(), email, None
 
     conn = sqlite3.connect(SQLITE_DB_FILE_PATH)
-    conn.execute(SQLITE_DB_CREATE_RECORD_STATEMENT, args)
+    conn.cursor().execute(SQLITE_DB_CREATE_RECORD_STATEMENT, args)
+    conn.commit()
+
     logging.debug(f"Created record {args}")
     conn.close()
 
@@ -47,10 +51,10 @@ def create_record(email: str) -> str:
 
 
 def get_record(uid: str) -> tuple[Any]:
-    args = uid,
+    args = uuid.UUID(uid),
 
     conn = sqlite3.connect(SQLITE_DB_FILE_PATH)
-    res = conn.execute(SQLITE_DB_GET_RECORD_STATEMENT, args).fetchone()
+    res = conn.cursor().execute(SQLITE_DB_GET_RECORD_STATEMENT, args).fetchone()
     logging.debug(f"Got record {res}")
     conn.close()
 
@@ -58,9 +62,11 @@ def get_record(uid: str) -> tuple[Any]:
 
 
 def update_record(uid: str) -> None:
-    args = uid, datetime.now(timezone.utc)
+    args = datetime.now(timezone.utc), uuid.UUID(uid)
 
     conn = sqlite3.connect(SQLITE_DB_FILE_PATH)
-    conn.execute(SQLITE_DB_UPDATE_RECORD_STATEMENT, args)
+    conn.cursor().execute(SQLITE_DB_UPDATE_RECORD_STATEMENT, args)
+    conn.commit()
+
     logging.debug(f"Updated record {args}")
     conn.close()
