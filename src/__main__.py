@@ -12,7 +12,6 @@ web_cli.add_argument("--port", type=int, help="Port number")
 web_cli.set_defaults(cmd="serve")
 email_cli = subparser.add_parser("send", help="Send infected email")
 email_cli.add_argument("--address", required=True, help="Target's email address")
-email_cli.add_argument("--host", required=True, help="Backend host url")
 email_cli.set_defaults(cmd="send")
 
 

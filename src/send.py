@@ -1,6 +1,9 @@
 import logging
 
 from smtplib import SMTP_SSL
+from email.header import Header
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 from . import util
 
@@ -15,7 +18,16 @@ def prepare_body(address: str) -> str:
     backend_host = config.get("host") + "/" + uid
     email_from = gmail_config.get("from")
 
-    return util.EMAIL_BODY % (email_from, address, backend_host)
+    msg = MIMEMultipart("alternative")
+    email_body = MIMEText((util.EMAIL_BODY % backend_host).encode("utf-8"), "html", "UTF-8")
+    msg.set_charset("utf8")
+
+    msg["From"] = email_from
+    msg["To"] = address
+    msg["Subject"] = Header(util.EMAIL_SUBJECT.encode("utf-8"), "UTF-8").encode()
+    msg.attach(email_body)
+
+    return msg.as_string()
 
 
 def send_email(address: str) -> None:
