@@ -7,15 +7,26 @@ from datetime import datetime, timezone
 
 from .constants import *
 
+parse_uuid = uuid.UUID
+
 logging.basicConfig(level=logging.DEBUG)
-sqlite3.register_adapter(uuid.UUID, lambda u: u.bytes_le)
-sqlite3.register_converter("GUID", lambda b: uuid.UUID(bytes_le=b))
+sqlite3.register_adapter(parse_uuid, lambda u: u.bytes_le)
+sqlite3.register_converter("GUID", lambda b: parse_uuid(bytes_le=b))
 
 
 @cache
 def create_image(width: int = 5, height: int = 5, channels: int = 4) -> bytes:
+    import io
     import numpy as np
-    return np.full((width, height, channels), 255, dtype=np.uint8).tobytes()
+    from PIL import Image
+
+    np_img = np.zeros((width, height, channels), dtype=np.uint8)
+    pil_img = Image.fromarray(np_img)
+
+    with io.BytesIO() as buf:
+        pil_img.save(buf, format="png")
+        pil_bytes = buf.getvalue()
+    return pil_bytes
 
 
 @cache
@@ -37,8 +48,8 @@ def create_db() -> None:
     conn.close()
 
 
-def create_record(email: str) -> str:
-    args = uuid.uuid4(), email, None
+def create_record(email: str) -> tuple[Any]:
+    args = uuid.uuid4(), uuid.uuid3(uuid.NAMESPACE_DNS, email), email, None
 
     conn = sqlite3.connect(SQLITE_DB_FILE_PATH)
     conn.cursor().execute(SQLITE_DB_CREATE_RECORD_STATEMENT, args)
@@ -47,14 +58,18 @@ def create_record(email: str) -> str:
     logging.debug(f"Created record {args}")
     conn.close()
 
-    return args[0]
+    return args
 
 
 def get_record(uid: str) -> tuple[Any]:
-    args = uuid.UUID(uid),
+    args = parse_uuid(uid),
+    if args[0].version() == 4:
+        statement = SQLITE_DB_GET_U_RECORD_STATEMENT
+    else:
+        statement = SQLITE_DB_GET_I_RECORD_STATEMENT
 
     conn = sqlite3.connect(SQLITE_DB_FILE_PATH)
-    res = conn.cursor().execute(SQLITE_DB_GET_RECORD_STATEMENT, args).fetchone()
+    res = conn.cursor().execute(statement, args).fetchone()
     logging.debug(f"Got record {res}")
     conn.close()
 
@@ -62,7 +77,9 @@ def get_record(uid: str) -> tuple[Any]:
 
 
 def update_record(uid: str) -> None:
-    args = datetime.now(timezone.utc), uuid.UUID(uid)
+    args = datetime.now(timezone.utc), parse_uuid(uid)
+    if args[1].version() != 4:
+        return
 
     conn = sqlite3.connect(SQLITE_DB_FILE_PATH)
     conn.cursor().execute(SQLITE_DB_UPDATE_RECORD_STATEMENT, args)

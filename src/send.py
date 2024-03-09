@@ -14,17 +14,17 @@ def prepare_body(address: str) -> str:
     config: dict = util.read_config()
     gmail_config: dict = config.get("gmail", {})
 
-    uid = util.create_record(address)
-    backend_host = config.get("host") + "/" + str(uid)
+    record = util.create_record(address)
+    args = [f"{config.get('host')}/{uid}" for uid in record[:2]]
     email_from = gmail_config.get("from")
 
     msg = MIMEMultipart("alternative")
-    email_body = MIMEText((util.EMAIL_BODY % backend_host).encode("utf-8"), "html", "UTF-8")
+    email_body = MIMEText((util.EMAIL_BODY % args).encode("utf-8"), "html", "utf-8")
     msg.set_charset("utf8")
 
     msg["From"] = email_from
     msg["To"] = address
-    msg["Subject"] = Header(util.EMAIL_SUBJECT.encode("utf-8"), "UTF-8").encode()
+    msg["Subject"] = Header(util.EMAIL_SUBJECT.encode("utf-8"), "utf-8").encode()
     msg.attach(email_body)
 
     return msg.as_string()

@@ -2,5 +2,6 @@ fastapi
 flake8
 gunicorn
 numpy
+Pillow
 pyyaml
 uvicorn
