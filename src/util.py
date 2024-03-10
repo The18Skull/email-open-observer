@@ -63,7 +63,7 @@ def create_record(email: str) -> tuple[Any]:
 
 def get_record(uid: str) -> tuple[Any]:
     args = parse_uuid(uid),
-    if args[0].version() == 4:
+    if args[0].version == 4:
         statement = SQLITE_DB_GET_U_RECORD_STATEMENT
     else:
         statement = SQLITE_DB_GET_I_RECORD_STATEMENT
@@ -78,7 +78,7 @@ def get_record(uid: str) -> tuple[Any]:
 
 def update_record(uid: str) -> None:
     args = datetime.now(timezone.utc), parse_uuid(uid)
-    if args[1].version() != 4:
+    if args[1].version != 4:
         return
 
     conn = sqlite3.connect(SQLITE_DB_FILE_PATH)

@@ -20,11 +20,11 @@ async def get_index(path: str) -> Response:
 
     uid = util.parse_uuid(path)
     if not record[-1]:
-        if uid.version() == 3:
+        if uid.version == 3:
             return Response(status_code=404)
         util.update_record(path)
 
-    if uid.version() == 4:
+    if uid.version == 4:
         image = util.create_image()
         return Response(content=image, media_type="image/png")
     return FileResponse("src/static/image.png", media_type="image/png")

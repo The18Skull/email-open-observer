@@ -15,7 +15,7 @@ def prepare_body(address: str) -> str:
     gmail_config: dict = config.get("gmail", {})
 
     record = util.create_record(address)
-    args = [f"{config.get('host')}/{uid}" for uid in record[:2]]
+    args = tuple(f"{config.get('host')}/{uid}" for uid in record[:2])
     email_from = gmail_config.get("from")
 
     msg = MIMEMultipart("alternative")
